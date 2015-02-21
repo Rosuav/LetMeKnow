@@ -43,7 +43,12 @@ def command(f):
 	for arg in doc[1:]:
 		arg = arg.strip().split(":", 1)
 		if len(arg) < 2: continue # Blank lines etc
-		p.add_argument(arg[0].strip(), help=arg[1].strip())
+		name = arg[0].strip()
+		opts = {}
+		if name=="calendar" and DEFAULT_CALENDAR:
+			opts["default"]=DEFAULT_CALENDAR
+			opts["nargs"]="?"
+		p.add_argument(name, help=arg[1].strip(), **opts)
 	return f
 
 @command
