@@ -4,7 +4,6 @@ from __future__ import print_function
 # to install it, though). For the most part, I expect that this code should
 # be able to run under Py3 unchanged, once the upstream dep is fixed, but
 # it hasn't been tested at all.
-import sys
 import argparse
 import datetime
 import pytz
@@ -124,6 +123,6 @@ def show(calendar):
 		print(ev[0]," - ",ev[0]-now," - ",ev[1])
 
 if __name__ == "__main__":
-	arguments = parser.parse_args(sys.argv[1:]).__dict__
+	arguments = parser.parse_args().__dict__
 	auth()
 	globals()[arguments.pop("command")](**arguments)
