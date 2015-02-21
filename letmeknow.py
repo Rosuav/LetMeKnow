@@ -56,7 +56,7 @@ def command(f):
 		if "=" in name:
 			# Parse out a default value
 			name, opts["default"] = name.split("=", 1)
-			opts["nargs"]="?"
+			if name[0]!="-": opts["nargs"]="?"
 		p.add_argument(name, help=arg[1].strip(), **opts)
 	return f
 
