@@ -151,6 +151,7 @@ def await(calendar, offset, days):
 	"""
 	offset, days = int(offset), int(days)
 	prev = None
+	repeat = False # If True, will cycle until we run out of events, rather than doing one and terminating
 	while True:
 		now = datetime.datetime.now(pytz.utc)
 		events = upcoming_events(calendar, offset, days)
@@ -184,14 +185,15 @@ def await(calendar, offset, days):
 			sys.stdout.flush()
 		# Wait the last few seconds.
 		sleep(delay.total_seconds())
-		break # And stop waiting!
-	# Send an alert, if possible. Otherwise just terminate the process,
-	# and allow command chaining to perform whatever alert is needed.
-	if ALERT_DIR:
-		fn = random.choice(os.listdir(ALERT_DIR))
-		print()
-		print(fn)
-		subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"w"),stderr=subprocess.STDOUT).wait()
+		# Send an alert, if possible. Otherwise just terminate the process,
+		# and allow command chaining to perform whatever alert is needed.
+		if ALERT_DIR:
+			fn = random.choice(os.listdir(ALERT_DIR))
+			print()
+			print(fn)
+			subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"w"),stderr=subprocess.STDOUT).wait()
+		if not repeat: break # Stop waiting, or go back into the loop and see how we go.
+		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
 
 if __name__ == "__main__":
 	arguments = parser.parse_args().__dict__
