@@ -1,4 +1,9 @@
 from __future__ import print_function
+# Note that this is written for Python 2.7 because the Google APIs don't
+# seem to work with 3.x (strangely enough, there's nothing telling pip not
+# to install it, though). For the most part, I expect that this code should
+# be able to run under Py3 unchanged, once the upstream dep is fixed, but
+# it hasn't been tested at all.
 import sys
 import argparse
 
@@ -31,9 +36,7 @@ def auth():
 	service = googleapiclient.discovery.build("calendar", "v3", http=credentials.authorize(http=httplib2.Http()))
 
 def command(f):
-	doc = f.__doc__
-	if not doc: doc=""
-	doc = doc.split("\n")
+	doc = f.__doc__.split("\n") # Require a docstring
 	p = subparsers.add_parser(f.__name__, help=doc[0])
 	for arg in doc[1:]:
 		arg = arg.strip().split(":", 1)
@@ -44,6 +47,7 @@ def command(f):
 @command
 def list():
 	"""List calendars available to your account"""
+	# TODO: Do this interactively and allow user to select one, which will be saved away
 	page_token = None
 	while True:
 		calendar_list = service.calendarList().list(pageToken=page_token).execute()
