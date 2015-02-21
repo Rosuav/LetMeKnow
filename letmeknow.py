@@ -155,7 +155,6 @@ def await(calendar, offset, days):
 	"""
 	offset, days = int(offset), int(days)
 	prev = None
-	repeat = False # If True, will cycle until we run out of events, rather than doing one and terminating
 	while True:
 		now = datetime.datetime.now(pytz.utc)
 		events = upcoming_events(calendar, offset, days)
@@ -196,7 +195,7 @@ def await(calendar, offset, days):
 			print()
 			print(fn)
 			subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"w"),stderr=subprocess.STDOUT).wait()
-		if not repeat: break # Stop waiting, or go back into the loop and see how we go.
+		if not ALERT_REPEAT: break # Stop waiting, or go back into the loop and see how we go.
 		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
 
 if __name__ == "__main__":
