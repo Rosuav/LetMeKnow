@@ -48,6 +48,10 @@ def command(f):
 		if name=="calendar" and DEFAULT_CALENDAR:
 			opts["default"]=DEFAULT_CALENDAR
 			opts["nargs"]="?"
+		if "=" in name:
+			# Parse out a default value
+			name, opts["default"] = name.split("=", 1)
+			opts["nargs"]="?"
 		p.add_argument(name, help=arg[1].strip(), **opts)
 	return f
 
