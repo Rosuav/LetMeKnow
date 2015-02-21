@@ -107,29 +107,15 @@ def upcoming_events(calendar, offset=0, days=3):
 	now = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
 	tomorrow = now + datetime.timedelta(days=days)
 	now,tomorrow = (x.strftime("%Y-%m-%dT%H:%M:%SZ") for x in (now,tomorrow))
-	# Recurring events are a bit of a pain. With those, the initial event
-	# object actually has the *first* start time used, not the next instance.
-	# So we have to go and do another call for those, fetching the instances
-	# that are within the current time frame. Additionally, the events appear
-	# to be sorted by that first start time, so when there are recurrings, we
-	# have to slot them into the correct positions. To do this, we need some
-	# kind of reliable sorting mechanism. I could probably cheat and just sort
-	# by the dateTime strings, as they'll normally all be in the same timezone
-	# (at least, they aren't being given in the event's timezone), but for
-	# safety's sake, we parse them out - see tz() and parse() above.
-	# Oddly enough, events appear once for each instance that's within the
-	# time period, so if you have frequent recurring events or a broad period,
-	# you will get duplicates. So it's clearly looking at the instances, but
-	# then returning the master events. Is there a way to get instance data??
 	eventlist=[]
+	# Note that I do my own sorting at the end, despite specifying orderBy. This
+	# is because, quite frankly, I don't trust Google Calendar's handling of
+	# multiple timezones. Normally I expect the final sort to be a simple matter
+	# of checking that they're in order, which should be a fast operation.
 	while True:
-		events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token).execute()
+		events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token, singleEvents=True, orderBy="startTime").execute()
 		for event in events['items']:
-			if "recurrence" in event:
-				for inst in service.events().instances(calendarId=calendar, eventId=event['id'], timeMin=now, timeMax=tomorrow).execute()['items']:
-					eventlist.append((parse(inst["start"]["dateTime"]),event['summary']))
-			else:
-				eventlist.append((parse(event["start"]["dateTime"]),event['summary']))
+			eventlist.append((parse(event["start"]["dateTime"]),event['summary']))
 		page_token = events.get('nextPageToken')
 		if not page_token: break
 	eventlist.sort()
