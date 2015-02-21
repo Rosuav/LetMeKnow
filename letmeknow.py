@@ -117,6 +117,10 @@ def upcoming_events(calendar, offset=0, days=3):
 	# by the dateTime strings, as they'll normally all be in the same timezone
 	# (at least, they aren't being given in the event's timezone), but for
 	# safety's sake, we parse them out - see tz() and parse() above.
+	# Oddly enough, events appear once for each instance that's within the
+	# time period, so if you have frequent recurring events or a broad period,
+	# you will get duplicates. So it's clearly looking at the instances, but
+	# then returning the master events. Is there a way to get instance data??
 	eventlist=[]
 	while True:
 		events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token).execute()
