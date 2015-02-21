@@ -142,17 +142,18 @@ def show(calendar):
 		print(ev[0]," - ",ev[0]-now," - ",ev[1])
 
 @command
-def await(calendar, offset):
+def await(calendar, offset, days):
 	"""Await the next event on this calendar
 	
 	calendar: Calendar ID, as shown by list()
 	--offset=0: Number of seconds leeway, eg 300 to halt 5 mins before
+	--days=7: Number of days in the future to look - gives up if no events in that time
 	"""
-	offset = int(offset)
+	offset, days = int(offset), int(days)
 	prev = None
 	while True:
 		now = datetime.datetime.now(pytz.utc)
-		events = upcoming_events(calendar, offset, 7)
+		events = upcoming_events(calendar, offset, days)
 		start = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
 		while events:
 			if events[0][0] < start: events.pop(0)
