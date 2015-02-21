@@ -6,6 +6,9 @@ from __future__ import print_function
 # it hasn't been tested at all.
 import sys
 import argparse
+import datetime
+import pytz
+from pprint import pprint
 
 from keys import * # ImportError? Check out keys_sample.py for details.
 
@@ -51,10 +54,74 @@ def list():
 	page_token = None
 	while True:
 		calendar_list = service.calendarList().list(pageToken=page_token).execute()
-		for calendar_list_entry in calendar_list['items']:
-			print(calendar_list_entry['summary'])
+		for cal in calendar_list['items']:
+			print(cal['id'])
+			print(u'\t'+cal['summary'])
 		page_token = calendar_list.get('nextPageToken')
 		if not page_token: break
+
+class tz(datetime.tzinfo):
+	def __init__(self, desc):
+		self.desc = desc
+		# Calculate the offset, which is what we really want
+		# The descriptor should be "-HH:MM" where HH is hours
+		# and MM is minutes, and the first character is a minus
+		# sign for negative or is assumed to be a plus sign.
+		hr = int(desc[1:3])
+		min = int(desc[4:])
+		if desc[0]=='-': hr, min = -hr, -min # Negate both parts
+		ofs = datetime.timedelta(hours=hr, minutes=min)
+		self.ofs = ofs
+	def utcoffset(self, datetime):
+		return self.ofs
+	def __repr__(self):
+		return "<TZ: "+self.desc+">"
+
+def parse(date):
+	"""Parse a datetime string that Google produces and return an aware datetime object"""
+	# Start with the main work.
+	d = datetime.datetime.strptime(date[:-6],"%Y-%m-%dT%H:%M:%S")
+	# Now let's try... TRY to patch in a timezone.
+	return d.replace(tzinfo=tz(date[-6:]))
+
+def upcoming_events(calendar):
+	page_token = None
+	now = datetime.datetime.now(pytz.utc)
+	tomorrow = now + datetime.timedelta(days=3)
+	now,tomorrow = (x.strftime("%Y-%m-%dT%H:%M:%SZ") for x in (now,tomorrow))
+	# Recurring events are a bit of a pain. With those, the initial event
+	# object actually has the *first* start time used, not the next instance.
+	# So we have to go and do another call for those, fetching the instances
+	# that are within the current time frame. Additionally, the events appear
+	# to be sorted by that first start time, so when there are recurrings, we
+	# have to slot them into the correct positions. To do this, we need some
+	# kind of reliable sorting mechanism. I could probably cheat and just sort
+	# by the dateTime strings, as they'll normally all be in the same timezone
+	# (at least, they aren't being given in the event's timezone), but for
+	# safety's sake, we parse them out - see tz() and parse() above.
+	eventlist=[]
+	while True:
+		events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token).execute()
+		for event in events['items']:
+			if "recurrence" in event:
+				for inst in service.events().instances(calendarId=calendar, eventId=event['id'], timeMin=now, timeMax=tomorrow).execute()['items']:
+					eventlist.append((parse(inst["start"]["dateTime"]),event['summary']))
+			else:
+				eventlist.append((parse(event["start"]["dateTime"]),event['summary']))
+		page_token = events.get('nextPageToken')
+		if not page_token: break
+	eventlist.sort()
+	return eventlist
+
+@command
+def show(calendar):
+	"""Show upcoming events from one calendar
+
+	calendar: Calendar ID, as shown by list()
+	"""
+	now = datetime.datetime.now(pytz.utc)
+	for ev in upcoming_events(calendar):
+		print(ev[0]," - ",ev[0]-now," - ",ev[1])
 
 if __name__ == "__main__":
 	arguments = parser.parse_args(sys.argv[1:]).__dict__
