@@ -163,14 +163,15 @@ def await(calendar, offset, days):
 			if events[0][0] < start: events.pop(0)
 			else: break
 		if not events:
-			print("Nothing to wait for in the entire next week - aborting.")
+			print("Nothing to wait for in the entire next",days,"days - aborting.")
 			return
-		target = events[0][0]-datetime.timedelta(seconds=offset)
+		time, event = events[0]
+		target = time-datetime.timedelta(seconds=offset)
 		delay = target-datetime.datetime.now(pytz.utc)
-		if prev and prev!=events[0][1]: print() # Drop to a new line if the target event changes
-		print("Sleeping",delay,"until",target,end="                \r")
+		if prev and prev!=event: print() # Drop to a new line if the target event changes
+		print("Sleeping",delay,"until",target,"-",event,end="                \r")
 		sys.stdout.flush()
-		prev=events[0][1]
+		prev=event
 		if delay.total_seconds() > 900:
 			# Wait fifteen minutes, then re-check the calendar.
 			# This may discover a new event, or may find that the
@@ -184,7 +185,7 @@ def await(calendar, offset, days):
 		while delay.total_seconds() > 60:
 			sleep(60)
 			delay = target-datetime.datetime.now(pytz.utc)
-			print("Sleeping",delay,"until",target,end="        \r")
+			print("Sleeping",delay,"until",target,"-",event,end="        \r")
 			sys.stdout.flush()
 		# Wait the last few seconds.
 		sleep(delay.total_seconds())
