@@ -7,7 +7,12 @@ from __future__ import print_function
 import argparse
 import datetime
 import pytz
+import sys
+import os
+import random
+import subprocess
 from pprint import pprint
+from time import sleep
 
 from keys import * # ImportError? Check out keys_sample.py for details.
 
@@ -92,10 +97,15 @@ def parse(date):
 	# Now let's try... TRY to patch in a timezone.
 	return d.replace(tzinfo=tz(date[-6:]))
 
-def upcoming_events(calendar):
+def upcoming_events(calendar, offset=0, days=3):
+	# Returns only those at least offset seconds from the current time -
+	# offset may be negative to return events in the past. The events'
+	# times will all be exactly correct; it's only the definition of
+	# "upcoming" that is affected by the offset. Returns events within
+	# the next 'days' days.
 	page_token = None
-	now = datetime.datetime.now(pytz.utc)
-	tomorrow = now + datetime.timedelta(days=3)
+	now = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
+	tomorrow = now + datetime.timedelta(days=days)
 	now,tomorrow = (x.strftime("%Y-%m-%dT%H:%M:%SZ") for x in (now,tomorrow))
 	# Recurring events are a bit of a pain. With those, the initial event
 	# object actually has the *first* start time used, not the next instance.
@@ -130,6 +140,57 @@ def show(calendar):
 	now = datetime.datetime.now(pytz.utc)
 	for ev in upcoming_events(calendar):
 		print(ev[0]," - ",ev[0]-now," - ",ev[1])
+
+@command
+def await(calendar, offset):
+	"""Await the next event on this calendar
+	
+	calendar: Calendar ID, as shown by list()
+	--offset=0: Number of seconds leeway, eg 300 to halt 5 mins before
+	"""
+	offset = int(offset)
+	prev = None
+	while True:
+		now = datetime.datetime.now(pytz.utc)
+		events = upcoming_events(calendar, offset, 7)
+		start = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
+		while events:
+			if events[0][0] < start: events.pop(0)
+			else: break
+		if not events:
+			print("Nothing to wait for in the entire next week - aborting.")
+			return
+		target = events[0][0]-datetime.timedelta(seconds=offset)
+		delay = target-datetime.datetime.now(pytz.utc)
+		if prev and prev!=events[0][1]: print() # Drop to a new line if the target event changes
+		print("Sleeping",delay,"until",target,end="                \r")
+		sys.stdout.flush()
+		prev=events[0][1]
+		if delay.total_seconds() > 900:
+			# Wait fifteen minutes, then re-check the calendar.
+			# This may discover a new event, or may find that the
+			# current one has been cancelled, or anything.
+			sleep(900)
+			continue
+		# Wait out the necessary time, counting down the minutes.
+		# From here on, we won't go back to the calendar at all.
+		# Event changes with less than fifteen minutes to go
+		# won't be noticed.
+		while delay.total_seconds() > 60:
+			sleep(60)
+			delay = target-datetime.datetime.now(pytz.utc)
+			print("Sleeping",delay,"until",target,end="        \r")
+			sys.stdout.flush()
+		# Wait the last few seconds.
+		sleep(delay.total_seconds())
+		break # And stop waiting!
+	# Send an alert, if possible. Otherwise just terminate the process,
+	# and allow command chaining to perform whatever alert is needed.
+	if ALERT_DIR:
+		fn = random.choice(os.listdir(ALERT_DIR))
+		print()
+		print(fn)
+		subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"w"),stderr=subprocess.STDOUT).wait()
 
 if __name__ == "__main__":
 	arguments = parser.parse_args().__dict__
