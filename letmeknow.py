@@ -155,7 +155,7 @@ def await(calendar, offset, days):
 		target = time-datetime.timedelta(seconds=offset)
 		delay = target-datetime.datetime.now(pytz.utc)
 		if prev and prev!=event: print() # Drop to a new line if the target event changes
-		print("Sleeping",delay,"until",target,"-",event,end="                \r")
+		print("Sleeping",delay,"until",target,"-",event,end="\33[K\r")
 		sys.stdout.flush()
 		prev=event
 		if delay.total_seconds() > 900:
@@ -171,7 +171,7 @@ def await(calendar, offset, days):
 		while delay.total_seconds() > 60:
 			sleep(60)
 			delay = target-datetime.datetime.now(pytz.utc)
-			print("Sleeping",delay,"until",target,"-",event,end="        \r")
+			print("Sleeping",delay,"until",target,"-",event,end="\33[K\r")
 			sys.stdout.flush()
 		# Wait the last few seconds.
 		sleep(delay.total_seconds())
