@@ -58,6 +58,9 @@ def command(f):
 			# Parse out a default value
 			name, opts["default"] = name.split("=", 1)
 			if name[0]!="-": opts["nargs"]="?"
+			if opts["default"]=="True":
+				del opts["default"]
+				opts["action"]="store_true"
 		p.add_argument(name, help=arg[1].strip(), **opts)
 	return f
 
@@ -116,21 +119,24 @@ def upcoming_events(calendar, offset=0, days=3):
 	while True:
 		events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token, singleEvents=True, orderBy="startTime").execute()
 		for event in events['items']:
-			eventlist.append((parse(event["start"]["dateTime"]),event['summary']))
+			eventlist.append((parse(event["start"]["dateTime"]),event['summary'],event["start"].get("timeZone")))
 		page_token = events.get('nextPageToken')
 		if not page_token: break
 	eventlist.sort()
 	return eventlist
 
 @command
-def show(calendar):
+def show(calendar,tz):
 	"""Show upcoming events from one calendar
 
 	calendar: Calendar ID, as shown by list()
+	--tz=True: Show timezones
 	"""
 	now = datetime.datetime.now(pytz.utc)
 	for ev in upcoming_events(calendar):
-		print(ev[0]," - ",ev[0]-now," - ",ev[1])
+		if tz and ev[2]: ts = str(ev[0]) + " " + ev[2]
+		else: ts = ev[0]
+		print(ts," - ",ev[0]-now," - ",ev[1])
 
 @command
 def await(calendar, offset, days):
