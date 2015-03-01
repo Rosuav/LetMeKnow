@@ -9,6 +9,7 @@ import datetime
 import pytz
 import sys
 import os
+import ssl
 import random
 import subprocess
 from pprint import pprint
@@ -143,7 +144,16 @@ def await(calendar, offset, days):
 	prev = None
 	while True:
 		now = datetime.datetime.now(pytz.utc)
-		events = upcoming_events(calendar, offset, days)
+		try:
+			events = upcoming_events(calendar, offset, days)
+		except ssl.SSLError:
+			# SSL errors usually mean connection issues.
+			# Hope/assume that there haven't been any event changes,
+			# and just retain the previous event list. Yes, this looks
+			# like a naive "oh dear, we had an error, just ignore it",
+			# but it's a deliberate choice, and one that's going to be
+			# safe as long as the 'days' parameter is appropriate.
+			pass
 		start = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
 		while events:
 			if events[0][0] < start: events.pop(0)
