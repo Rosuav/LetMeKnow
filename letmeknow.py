@@ -167,7 +167,7 @@ def await(calendar, offset, days):
 		if not events:
 			print("Nothing to wait for in the entire next",days,"days - aborting.")
 			return
-		time, event = events[0]
+		time, event, _ = events[0]
 		target = time-datetime.timedelta(seconds=offset)
 		delay = target-datetime.datetime.now(pytz.utc)
 		if prev and prev!=event: print() # Drop to a new line if the target event changes
