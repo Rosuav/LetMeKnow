@@ -152,8 +152,8 @@ def await(calendar, offset, days):
 		now = datetime.datetime.now(pytz.utc)
 		try:
 			events = upcoming_events(calendar, offset, days)
-		except ssl.SSLError:
-			# SSL errors usually mean connection issues.
+		except (ssl.SSLError, OSError):
+			# SSL or OS errors usually mean connection issues.
 			# Hope/assume that there haven't been any event changes,
 			# and just retain the previous event list. Yes, this looks
 			# like a naive "oh dear, we had an error, just ignore it",
