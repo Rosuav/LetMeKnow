@@ -183,14 +183,14 @@ def await(calendar, offset, days, title):
 			# Wait fifteen minutes, then re-check the calendar.
 			# This may discover a new event, or may find that the
 			# current one has been cancelled, or anything.
-			if title: set_title(event)
+			if title: set_title("%dh: %s" % (delay.total_seconds()//3600, event))
 			sleep(900)
 			continue
 		# Wait out the necessary time, counting down the minutes.
 		# From here on, we won't go back to the calendar at all.
 		# Event changes with less than fifteen minutes to go
 		# won't be noticed.
-		if title: set_title(">>"+event)
+		if title: set_title(">> "+event)
 		while delay.total_seconds() > 60:
 			sleep(60)
 			delay = target-datetime.datetime.now(pytz.utc)
