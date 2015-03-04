@@ -138,13 +138,18 @@ def show(calendar,tz):
 		else: ts = ev[0]
 		print(ts," - ",ev[0]-now," - ",ev[1])
 
+def set_title(title):
+	print("\033]0;"+title, end="\a")
+	sys.stdout.flush()
+
 @command
-def await(calendar, offset, days):
+def await(calendar, offset, days, title):
 	"""Await the next event on this calendar
 	
 	calendar: Calendar ID, as shown by list()
 	--offset=0: Number of seconds leeway, eg 300 to halt 5 mins before
 	--days=7: Number of days in the future to look - gives up if no events in that time
+	--title=True: Set the terminal title to show what's happening
 	"""
 	offset, days = int(offset), int(days)
 	prev = None
@@ -178,12 +183,14 @@ def await(calendar, offset, days):
 			# Wait fifteen minutes, then re-check the calendar.
 			# This may discover a new event, or may find that the
 			# current one has been cancelled, or anything.
+			if title: set_title(event)
 			sleep(900)
 			continue
 		# Wait out the necessary time, counting down the minutes.
 		# From here on, we won't go back to the calendar at all.
 		# Event changes with less than fifteen minutes to go
 		# won't be noticed.
+		if title: set_title(">>"+event)
 		while delay.total_seconds() > 60:
 			sleep(60)
 			delay = target-datetime.datetime.now(pytz.utc)
@@ -197,6 +204,7 @@ def await(calendar, offset, days):
 			fn = random.choice(os.listdir(ALERT_DIR))
 			print()
 			print(fn)
+			if title: set_title(fn)
 			subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"w"),stderr=subprocess.STDOUT).wait()
 		if not ALERT_REPEAT: break # Stop waiting, or go back into the loop and see how we go.
 		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
