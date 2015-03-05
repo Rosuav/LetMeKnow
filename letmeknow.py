@@ -27,6 +27,7 @@ def auth():
 	import httplib2
 	import oauth2client.file
 	import oauth2client.client
+	import oauth2client.tools
 	import googleapiclient.discovery
 	storage = oauth2client.file.Storage("credentials.dat")
 	credentials = storage.get()
