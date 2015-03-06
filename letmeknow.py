@@ -184,8 +184,11 @@ def await(calendar, offset, days, title):
 			# Wait fifteen minutes, then re-check the calendar.
 			# This may discover a new event, or may find that the
 			# current one has been cancelled, or anything.
+			# Once we're within the last half hour, sleep just five
+			# minutes at a time, to make sure we don't have a stupid
+			# case where network latency kills us.
 			if title: set_title("%dh: %s" % (delay.total_seconds()//3600, event))
-			sleep(900)
+			sleep(900 if delay.total_seconds() > 1800 else 300)
 			continue
 		# Wait out the necessary time, counting down the minutes.
 		# From here on, we won't go back to the calendar at all.
