@@ -196,7 +196,7 @@ def await(calendar, offset, days, title):
 		# won't be noticed.
 		if title: set_title(">> "+event)
 		while delay.total_seconds() > 60:
-			sleep(60)
+			sleep(60 if delay.total_seconds() > 120 else 30)
 			delay = target-datetime.datetime.now(pytz.utc)
 			print("Sleeping",delay,"until",target,"-",event,end="\33[K\r")
 			sys.stdout.flush()
