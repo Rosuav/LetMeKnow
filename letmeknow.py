@@ -92,6 +92,8 @@ class DocstringArgs(object):
 				# Parse out a default value
 				name, opts["default"] = name.split("=", 1)
 				if name[0]!="-": opts["nargs"]="?"
+				# "arg=True" means store_true rather than an
+				# actual default value of "True".
 				if opts["default"]=="True":
 					del opts["default"]
 					opts["action"]="store_true"
