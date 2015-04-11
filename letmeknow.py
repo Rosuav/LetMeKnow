@@ -17,6 +17,8 @@ from time import sleep
 
 from keys import * # ImportError? Check out keys_sample.py for details.
 
+# Basic argparse setup: provide the application description, and set a basis
+# for subcommand handling. These will be used elsewhere.
 parser = argparse.ArgumentParser(description="Let Me Know - Google Calendar notifications using Frozen")
 subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -45,6 +47,22 @@ def auth():
 	service = googleapiclient.discovery.build("calendar", "v3", http=credentials.authorize(http=httplib2.Http()))
 
 def command(f):
+	"""Decorator to make a function available via the command line
+
+	The docstring is parsed to construct argparse configs. The function's
+	name becomes a subparser keyword; the first docstring line is the
+	description. After that, each line should describe one argument:
+	a parameter name, followed by a colon, and then its description.
+
+	If the parameter name is prefixed with "--", it becomes an option,
+	otherwise it is a positional arg. If it is followed by "=True",
+	it becomes a store_true flag (usually best with options rather than
+	positionals); followed by "=" and anything else, it gains a default
+	value.
+
+	Some LetMeKnow-specific magic: Any argument named 'calendar' will
+	automatically get a default of DEFAULT_CALENDAR, if one has been set.
+	"""
 	doc = f.__doc__.split("\n") # Require a docstring
 	p = subparsers.add_parser(f.__name__, help=doc[0])
 	for arg in doc[1:]:
