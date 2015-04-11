@@ -51,10 +51,15 @@ class DocstringArgs(object):
 		'''Subcommand description goes here'''
 	arguments = cmdline.parse_args()
 	globals()[arguments.pop("command")](**arguments)
+
+	Similar in purpose to docopt, but instead of handling all a program's
+	arguments in one place, it handles each subcommand as that function's
+	docstring.
 	"""
-	def __init__(self, desc):
+	def __init__(self, desc, defaults=None):
 		self.parser = argparse.ArgumentParser(description=desc)
 		self.subparsers = self.parser.add_subparsers(dest="command", help="Available commands")
+		self.defaults = defaults or {}
 
 	def __call__(self, f):
 		"""Decorator to make a function available via the command line
@@ -70,8 +75,8 @@ class DocstringArgs(object):
 		positionals); followed by "=" and anything else, it gains a default
 		value.
 
-		Some LetMeKnow-specific magic: Any argument named 'calendar' will
-		automatically get a default of DEFAULT_CALENDAR, if one has been set.
+		Any argument named in self.defaults will have their defaults set
+		automatically.
 		"""
 		doc = f.__doc__.split("\n") # Require a docstring
 		p = self.subparsers.add_parser(f.__name__, help=doc[0])
@@ -80,8 +85,8 @@ class DocstringArgs(object):
 			if len(arg) < 2: continue # Blank lines etc
 			name = arg[0].strip()
 			opts = {}
-			if name=="calendar" and DEFAULT_CALENDAR:
-				opts["default"]=DEFAULT_CALENDAR
+			if name in self.defaults:
+				opts["default"]=self.defaults[name]
 				opts["nargs"]="?"
 			if "=" in name:
 				# Parse out a default value
@@ -97,7 +102,9 @@ class DocstringArgs(object):
 		"""Parse args and return a dictionary (more useful than a namespace)"""
 		return self.parser.parse_args().__dict__
 
-command = DocstringArgs("Let Me Know - Google Calendar notifications using Frozen")
+defs = {}
+if DEFAULT_CALENDAR: defs["calendar"] = DEFAULT_CALENDAR
+command = DocstringArgs("Let Me Know - Google Calendar notifications using Frozen", defs)
 
 @command
 def list():
