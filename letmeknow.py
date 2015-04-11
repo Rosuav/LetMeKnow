@@ -17,11 +17,6 @@ from time import sleep
 
 from keys import * # ImportError? Check out keys_sample.py for details.
 
-# Basic argparse setup: provide the application description, and set a basis
-# for subcommand handling. These will be used elsewhere.
-parser = argparse.ArgumentParser(description="Let Me Know - Google Calendar notifications using Frozen")
-subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
 def auth():
 	"""Authenticate with Google. Must be done prior to any other commands."""
 	# Some of these imports take quite a while, so don't do them if the user
@@ -46,42 +41,63 @@ def auth():
 	global service
 	service = googleapiclient.discovery.build("calendar", "v3", http=credentials.authorize(http=httplib2.Http()))
 
-def command(f):
-	"""Decorator to make a function available via the command line
+class DocstringArgs(object):
+	"""Configure argparse based on function docstrings
 
-	The docstring is parsed to construct argparse configs. The function's
-	name becomes a subparser keyword; the first docstring line is the
-	description. After that, each line should describe one argument:
-	a parameter name, followed by a colon, and then its description.
-
-	If the parameter name is prefixed with "--", it becomes an option,
-	otherwise it is a positional arg. If it is followed by "=True",
-	it becomes a store_true flag (usually best with options rather than
-	positionals); followed by "=" and anything else, it gains a default
-	value.
-
-	Some LetMeKnow-specific magic: Any argument named 'calendar' will
-	automatically get a default of DEFAULT_CALENDAR, if one has been set.
+	Basic usage:
+	cmdline = DocstringArgs("Program description goes here")
+	@cmdline
+	def subcommand():
+		'''Subcommand description goes here'''
+	arguments = cmdline.parse_args()
+	globals()[arguments.pop("command")](**arguments)
 	"""
-	doc = f.__doc__.split("\n") # Require a docstring
-	p = subparsers.add_parser(f.__name__, help=doc[0])
-	for arg in doc[1:]:
-		arg = arg.strip().split(":", 1)
-		if len(arg) < 2: continue # Blank lines etc
-		name = arg[0].strip()
-		opts = {}
-		if name=="calendar" and DEFAULT_CALENDAR:
-			opts["default"]=DEFAULT_CALENDAR
-			opts["nargs"]="?"
-		if "=" in name:
-			# Parse out a default value
-			name, opts["default"] = name.split("=", 1)
-			if name[0]!="-": opts["nargs"]="?"
-			if opts["default"]=="True":
-				del opts["default"]
-				opts["action"]="store_true"
-		p.add_argument(name, help=arg[1].strip(), **opts)
-	return f
+	def __init__(self, desc):
+		self.parser = argparse.ArgumentParser(description=desc)
+		self.subparsers = self.parser.add_subparsers(dest="command", help="Available commands")
+
+	def __call__(self, f):
+		"""Decorator to make a function available via the command line
+
+		The docstring is parsed to construct argparse configs. The function's
+		name becomes a subparser keyword; the first docstring line is the
+		description. After that, each line should describe one argument:
+		a parameter name, followed by a colon, and then its description.
+
+		If the parameter name is prefixed with "--", it becomes an option,
+		otherwise it is a positional arg. If it is followed by "=True",
+		it becomes a store_true flag (usually best with options rather than
+		positionals); followed by "=" and anything else, it gains a default
+		value.
+
+		Some LetMeKnow-specific magic: Any argument named 'calendar' will
+		automatically get a default of DEFAULT_CALENDAR, if one has been set.
+		"""
+		doc = f.__doc__.split("\n") # Require a docstring
+		p = self.subparsers.add_parser(f.__name__, help=doc[0])
+		for arg in doc[1:]:
+			arg = arg.strip().split(":", 1)
+			if len(arg) < 2: continue # Blank lines etc
+			name = arg[0].strip()
+			opts = {}
+			if name=="calendar" and DEFAULT_CALENDAR:
+				opts["default"]=DEFAULT_CALENDAR
+				opts["nargs"]="?"
+			if "=" in name:
+				# Parse out a default value
+				name, opts["default"] = name.split("=", 1)
+				if name[0]!="-": opts["nargs"]="?"
+				if opts["default"]=="True":
+					del opts["default"]
+					opts["action"]="store_true"
+			p.add_argument(name, help=arg[1].strip(), **opts)
+		return f
+
+	def parse_args(self):
+		"""Parse args and return a dictionary (more useful than a namespace)"""
+		return self.parser.parse_args().__dict__
+
+command = DocstringArgs("Let Me Know - Google Calendar notifications using Frozen")
 
 @command
 def list():
@@ -232,6 +248,6 @@ def await(calendar, offset, days, title):
 		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
 
 if __name__ == "__main__":
-	arguments = parser.parse_args().__dict__
+	arguments = command.parse_args()
 	auth()
 	globals()[arguments.pop("command")](**arguments)
