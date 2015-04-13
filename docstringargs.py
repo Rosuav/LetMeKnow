@@ -40,6 +40,10 @@ class DocstringArgs(object):
 
 		Any argument named in self.defaults will have their defaults set
 		automatically.
+
+		Arguments annotated with strings will also be handled by argparse,
+		using the annotation as the description (and any function default
+		as per the defaults given above).
 		"""
 		doc = f.__doc__.split("\n") # Require a docstring
 		p = self.subparsers.add_parser(f.__name__, help=doc[0])
@@ -50,8 +54,15 @@ class DocstringArgs(object):
 			# and match off the tail of those against the function defaults.
 			for arg, deflt in zip(c.co_varnames[:c.co_argcount][-len(f.__defaults__):], f.__defaults__):
 				defs[arg] = deflt
-		try: defs.update(f.__kwdefaults__)
+		try: defs.update(f.__kwdefaults__ or ())
 		except AttributeError: pass # Python 2 doesn't have keyword-only args
+		try: ann = f.__annotations__
+		except AttributeError: pass # Python 2 doesn't have annotations, so assume they weren't used.
+		for name, desc in ann.items():
+			if isinstance(desc, str):
+				# Hack: Stick it into the list, so we don't have to run the loop twice.
+				doc.append(name+": "+desc)
+				ann.pop(name) # Assume we'll be using it, and remove the annotation.
 		# Note that defaults are not significant - explanatory text is. That comes from
 		# the docstring.
 		for arg in doc[1:]:
