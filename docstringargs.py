@@ -32,28 +32,43 @@ class DocstringArgs(object):
 		otherwise it is a positional arg. If it is followed by "=True",
 		it becomes a store_true flag (usually best with options rather than
 		positionals); followed by "=" and anything else, it gains a default
-		value.
+		value. Parameter defaults can also be provided by the function's
+		default arguments, in which case it is the bool value False (rather
+		than the string "True") which triggers store_true. Note that this
+		appears backward; the default is what happens if the argument is
+		NOT provided. TODO: Should the string form change to match this?
 
 		Any argument named in self.defaults will have their defaults set
 		automatically.
 		"""
 		doc = f.__doc__.split("\n") # Require a docstring
 		p = self.subparsers.add_parser(f.__name__, help=doc[0])
+		c = f.__code__
+		defs = self.defaults.copy()
+		if f.__defaults__:
+			# Is there a better way to do this? I want to take the first argcount names,
+			# and match off the tail of those against the function defaults.
+			for arg, deflt in zip(c.co_varnames[:c.co_argcount][-len(f.__defaults__):], f.__defaults__):
+				defs[arg] = deflt
+		try: defs.update(f.__kwdefaults__)
+		except AttributeError: pass # Python 2 doesn't have keyword-only args
+		# Note that defaults are not significant - explanatory text is. That comes from
+		# the docstring.
 		for arg in doc[1:]:
 			arg = arg.strip().split(":", 1)
 			if len(arg) < 2: continue # Blank lines etc
 			name = arg[0].strip()
 			opts = {}
-			if name in self.defaults:
-				opts["default"]=self.defaults[name]
-				opts["nargs"]="?"
-			if "=" in name:
-				# Parse out a default value
+			if name in defs:
+				opts["default"] = defs.pop(name)
+			elif "=" in name:
 				name, opts["default"] = name.split("=", 1)
-				if name[0]!="-": opts["nargs"]="?"
 				# "arg=True" means store_true rather than an
 				# actual default value of "True".
-				if opts["default"]=="True":
+				if opts["default"]=="True": opts["default"] = False
+			if "default" in opts:
+				if name[0]!="-": opts["nargs"]="?"
+				if opts["default"] is False:
 					del opts["default"]
 					opts["action"]="store_true"
 			p.add_argument(name, help=arg[1].strip(), **opts)
