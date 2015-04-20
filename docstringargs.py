@@ -56,13 +56,14 @@ class DocstringArgs(object):
 				defs[arg] = deflt
 		try: defs.update(f.__kwdefaults__ or ())
 		except AttributeError: pass # Python 2 doesn't have keyword-only args
-		try: ann = f.__annotations__
+		try:
+			ann = f.__annotations__
+			for name, desc in ann.items():
+				if isinstance(desc, str):
+					# Hack: Stick it into the list, so we don't have to run the loop twice.
+					doc.append(name+": "+desc)
+					ann.pop(name) # Assume we'll be using it, and remove the annotation.
 		except AttributeError: pass # Python 2 doesn't have annotations, so assume they weren't used.
-		for name, desc in ann.items():
-			if isinstance(desc, str):
-				# Hack: Stick it into the list, so we don't have to run the loop twice.
-				doc.append(name+": "+desc)
-				ann.pop(name) # Assume we'll be using it, and remove the annotation.
 		# Note that defaults are not significant - explanatory text is. That comes from
 		# the docstring.
 		for arg in doc[1:]:
