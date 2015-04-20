@@ -1,15 +1,15 @@
+import sys
 import argparse
 
 class DocstringArgs(object):
 	"""Configure argparse based on function docstrings
 
 	Basic usage:
-	cmdline = DocstringArgs("Program description goes here")
+	from docstringargs import cmdline
 	@cmdline
 	def subcommand():
 		'''Subcommand description goes here'''
-	arguments = cmdline.parse_args()
-	globals()[arguments.pop("command")](**arguments)
+	cmdline.main()
 
 	Similar in purpose to docopt, but instead of handling all a program's
 	arguments in one place, it handles each subcommand as that function's
@@ -19,6 +19,7 @@ class DocstringArgs(object):
 		self.parser = argparse.ArgumentParser(description=desc)
 		self.subparsers = self.parser.add_subparsers(dest="command", help="Available commands")
 		self.defaults = defaults or {}
+		self.handlers = {}
 
 	def __call__(self, f):
 		"""Decorator to make a function available via the command line
@@ -84,8 +85,20 @@ class DocstringArgs(object):
 					del opts["default"]
 					opts["action"]="store_true"
 			p.add_argument(name, help=arg[1].strip(), **opts)
+		self.handlers[f.__name__] = f
 		return f
 
 	def parse_args(self):
 		"""Parse args and return a dictionary (more useful than a namespace)"""
 		return self.parser.parse_args().__dict__
+
+	def main(self):
+		"""Parse arguments and call a function based on the chosen subcommand"""
+		arguments = self.parse_args()
+		return self.handlers[arguments.pop("command")](**arguments)
+
+# Convenience: Just import this and it'll DTRT in simple cases.
+if "__main__" in sys.modules:
+	# Note that we don't "import __main__" here, for several reasons.
+	# If there isn't anything there, we just quietly skip creating cmdline.
+	cmdline = DocstringArgs(module=sys.modules["__main__"].__doc__.split("\n", 1)[0])

@@ -1,7 +1,5 @@
 """DocstringArgs demo"""
-from docstringargs import DocstringArgs
-
-cmdline = DocstringArgs(__doc__)
+from docstringargs import cmdline
 
 @cmdline
 def hello(where: "Where to say hello to"="world"):
@@ -15,5 +13,4 @@ def count(top=5):
 	top: Number to count up to"""
 	for i in range(1, int(top)+1): print(i)
 
-arguments = cmdline.parse_args()
-globals()[arguments.pop("command")](**arguments)
+cmdline.main()
