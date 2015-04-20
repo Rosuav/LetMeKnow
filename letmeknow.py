@@ -4,6 +4,7 @@ from __future__ import print_function
 # to install it, though). For the most part, I expect that this code should
 # be able to run under Py3 unchanged, once the upstream dep is fixed, but
 # it hasn't been tested at all.
+# Requires docstringargs from https://github.com/Rosuav/docstringargs
 import datetime
 import pytz
 import sys
