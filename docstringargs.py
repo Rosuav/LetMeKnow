@@ -58,7 +58,7 @@ class DocstringArgs(object):
 		except AttributeError: pass # Python 2 doesn't have keyword-only args
 		try:
 			ann = f.__annotations__
-			for name, desc in ann.items():
+			for name, desc in list(ann.items()):
 				if isinstance(desc, str):
 					# Hack: Stick it into the list, so we don't have to run the loop twice.
 					doc.append(name+": "+desc)
