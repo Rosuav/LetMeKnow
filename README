@@ -1,0 +1,9 @@
+LetMeKnow - Google Calendar notifications using Frozen
+
+Logs in to your Google Calendar via the API and shows you what's coming up.
+Primary usage is with the 'await' subcommand, for example:
+
+python letmeknow.py await --offset 300 --title
+
+The code is currently bound to Python 2 due to limitations of the Google API
+module, but should be easy enough to port to Py3 when that is lifted.
