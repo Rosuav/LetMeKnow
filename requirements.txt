@@ -1,5 +1,6 @@
 pytz
-docstringargs
+clize
+funcsigs
 httplib2
 oauth2client
 google-api-python-client

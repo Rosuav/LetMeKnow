@@ -1,10 +1,10 @@
+"""Let Me Know - Google Calendar notifications using Frozen"""
 from __future__ import print_function
 # Note that this is written for Python 2.7 because the Google APIs don't
 # seem to work with 3.x (strangely enough, there's nothing telling pip not
 # to install it, though). For the most part, I expect that this code should
 # be able to run under Py3 unchanged, once the upstream dep is fixed, but
 # it hasn't been tested at all.
-# Requires docstringargs from https://github.com/Rosuav/docstringargs
 import datetime
 import pytz
 import sys
@@ -14,7 +14,13 @@ import random
 import subprocess
 from pprint import pprint
 from time import sleep
-from docstringargs import DocstringArgs
+import clize
+from sigtools.modifiers import kwoargs
+
+commands = []
+def command(f):
+	commands.append(f)
+	return f
 
 from keys import * # ImportError? Check out keys_sample.py for details.
 
@@ -42,14 +48,11 @@ def auth():
 	global service
 	service = googleapiclient.discovery.build("calendar", "v3", http=credentials.authorize(http=httplib2.Http()))
 
-defs = {}
-if DEFAULT_CALENDAR: defs["calendar"] = DEFAULT_CALENDAR
-command = DocstringArgs("Let Me Know - Google Calendar notifications using Frozen", defs)
-
 @command
 def list():
 	"""List calendars available to your account"""
 	# TODO: Do this interactively and allow user to select one, which will be saved away
+	auth()
 	page_token = None
 	while True:
 		calendar_list = service.calendarList().list(pageToken=page_token).execute()
@@ -108,12 +111,15 @@ def upcoming_events(calendar, offset=0, days=3):
 	return eventlist
 
 @command
-def show(calendar,tz):
+@kwoargs("tz")
+def show(calendar=DEFAULT_CALENDAR,tz=False):
 	"""Show upcoming events from one calendar
 
 	calendar: Calendar ID, as shown by list()
-	--tz=True: Show timezones
+
+	tz: Show timezones
 	"""
+	auth()
 	now = datetime.datetime.now(pytz.utc)
 	for ev in upcoming_events(calendar):
 		if tz and ev[2]: ts = str(ev[0]) + " " + ev[2]
@@ -125,14 +131,19 @@ def set_title(title):
 	sys.stdout.flush()
 
 @command
-def await(calendar, offset, days, title):
+@kwoargs("offset","days","title")
+def await(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 	"""Await the next event on this calendar
 	
 	calendar: Calendar ID, as shown by list()
-	--offset=0: Number of seconds leeway, eg 300 to halt 5 mins before
-	--days=7: Number of days in the future to look - gives up if no events in that time
-	--title=True: Set the terminal title to show what's happening
+
+	offset: Number of seconds leeway, eg 300 to halt 5 mins before
+
+	days: Number of days in the future to look - gives up if no events in that time
+
+	title: Set the terminal title to show what's happening
 	"""
+	auth()
 	offset, days = int(offset), int(days)
 	prev = None
 	while True:
@@ -195,6 +206,4 @@ def await(calendar, offset, days, title):
 		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
 
 if __name__ == "__main__":
-	arguments = command.parse_args()
-	auth()
-	globals()[arguments.pop("command")](**arguments)
+	clize.run(*commands)
