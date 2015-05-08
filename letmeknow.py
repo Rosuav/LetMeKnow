@@ -206,4 +206,4 @@ def await(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
 
 if __name__ == "__main__":
-	clize.run(*commands)
+	clize.run(commands)
