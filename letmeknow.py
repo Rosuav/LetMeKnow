@@ -111,8 +111,8 @@ def upcoming_events(calendar, offset=0, days=3):
 	return eventlist
 
 @command
-@kwoargs("tz")
-def show(calendar=DEFAULT_CALENDAR,tz=False):
+@kwoargs("days","tz")
+def show(calendar=DEFAULT_CALENDAR, days=3, tz=False):
 	"""Show upcoming events from one calendar
 
 	calendar: Calendar ID, as shown by list()
@@ -121,7 +121,7 @@ def show(calendar=DEFAULT_CALENDAR,tz=False):
 	"""
 	auth()
 	now = datetime.datetime.now(pytz.utc)
-	for ev in upcoming_events(calendar):
+	for ev in upcoming_events(calendar,days=days):
 		if tz and ev[2]: ts = str(ev[0]) + " " + ev[2]
 		else: ts = ev[0]
 		print(ts," - ",ev[0]-now," - ",ev[1])
