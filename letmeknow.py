@@ -117,6 +117,8 @@ def show(calendar=DEFAULT_CALENDAR, days=3, tz=False):
 
 	calendar: Calendar ID, as shown by list()
 
+	days: How far into the future to show events
+
 	tz: Show timezones
 	"""
 	auth()
