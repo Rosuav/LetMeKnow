@@ -1,4 +1,4 @@
-LetMeKnow - Google Calendar notifications using Frozen
+LetMeKnow - Google Calendar notifications using Frozen.
 
 Logs in to your Google Calendar via the API and shows you what's coming up.
 Primary usage is with the 'await' subcommand, for example:
