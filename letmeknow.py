@@ -186,11 +186,11 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 				# only a little bit, tag with '-'. The boundaries
 				# are set such that at least one of them will be
 				# shown every hour transition.
-				partial = delay.total_seconds() % 3600
+				hours, partial = divmod(delay.total_seconds(), 3600)
 				if partial < 600: tag = '-'
 				elif partial > 3000: tag = '+'
 				else: tag = ''
-				set_title("%dh%s: %s" % (delay.total_seconds()//3600, tag, event))
+				set_title("%dh%s: %s" % (hours, tag, event))
 			sleep(900 if delay.total_seconds() > 1800 else 300)
 			continue
 		# Wait out the necessary time, counting down the minutes.
