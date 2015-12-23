@@ -134,7 +134,7 @@ def set_title(title):
 
 @command
 @kwoargs("offset","days","title")
-def await(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
+def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 	"""Await the next event on this calendar
 	
 	calendar: Calendar ID, as shown by list()
