@@ -11,6 +11,7 @@ import sys
 import os
 import ssl
 import random
+import socket
 import subprocess
 from pprint import pprint
 from time import sleep
@@ -152,7 +153,7 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 		now = datetime.datetime.now(pytz.utc)
 		try:
 			events = upcoming_events(calendar, offset, days)
-		except (ssl.SSLError, OSError, IOError):
+		except (ssl.SSLError, OSError, IOError, socket.error):
 			# SSL or OS/IO errors usually mean connection issues.
 			# Hope/assume that there haven't been any event changes,
 			# and just retain the previous event list. Yes, this looks
@@ -160,6 +161,14 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 			# but it's a deliberate choice, and one that's going to be
 			# safe as long as the 'days' parameter is appropriate.
 			pass
+		except Exception:
+			# Any other exception, log it and reraise (which will most
+			# likely terminate the program).
+			import traceback
+			with open("exception.log", "a") as exc:
+				print("*** Exception in upcoming_events at", datetime.datetime.now(), file=exc)
+				traceback.print_exc(file=exc)
+			raise
 		start = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
 		while events:
 			if events[0][0] < start: events.pop(0)
