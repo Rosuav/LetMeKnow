@@ -161,14 +161,6 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 			# but it's a deliberate choice, and one that's going to be
 			# safe as long as the 'days' parameter is appropriate.
 			pass
-		except Exception:
-			# Any other exception, log it and reraise (which will most
-			# likely terminate the program).
-			import traceback
-			with open("exception.log", "a") as exc:
-				print("*** Exception in upcoming_events at", datetime.datetime.now(), file=exc)
-				traceback.print_exc(file=exc)
-			raise
 		start = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
 		while events:
 			if events[0][0] < start: events.pop(0)
@@ -226,4 +218,13 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
 
 if __name__ == "__main__":
-	clize.run(commands)
+	try:
+		clize.run(commands)
+	except KeyboardInterrupt: pass # Ctrl-C is normal termination
+	except Exception:
+		# On exception, log and reraise as an easy way to print the traceback to two places.
+		import traceback
+		with open("exception.log", "a") as exc:
+			print("*** Exception in upcoming_events at", datetime.datetime.now(), file=exc)
+			traceback.print_exc(file=exc)
+		raise
