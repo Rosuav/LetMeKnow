@@ -225,6 +225,6 @@ if __name__ == "__main__":
 		# On exception, log and reraise as an easy way to print the traceback to two places.
 		import traceback
 		with open("exception.log", "a") as exc:
-			print("*** Exception in upcoming_events at", datetime.datetime.now(), file=exc)
+			print("*** Uncaught exception at", datetime.datetime.now(), file=exc)
 			traceback.print_exc(file=exc)
 		raise
