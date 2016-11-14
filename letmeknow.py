@@ -227,4 +227,5 @@ if __name__ == "__main__":
 		with open("exception.log", "a") as exc:
 			print("*** Uncaught exception at", datetime.datetime.now(), file=exc)
 			traceback.print_exc(file=exc)
+			print(" - ".join(cls.__name__ for cls in type(exc).__mro__))
 		raise
