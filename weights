@@ -1,0 +1,20 @@
+# Randomness weighting for the files in ALERT_DIR
+# Each line specifies a weight for some subset of files,
+# specified by a glob-like pattern.
+
+# Adjust the default weight, thus allowing better granularity
+10: *
+
+# These files are slightly preferred.
+11: Icelandic*
+11: Flemish*
+11: Dutch*
+12: *English*
+
+# These files are slightly unpreferred.
+7: Ukrainian*
+9: Hebrew*
+9: Arabic*
+
+# To completely remove a file from consideration:
+0: some-unwanted-file*

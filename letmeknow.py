@@ -12,6 +12,7 @@ import os
 import ssl
 import random
 import socket
+import fnmatch
 import subprocess
 from pprint import pprint
 from time import sleep
@@ -133,6 +134,38 @@ def set_title(title):
 	print("\033]0;"+title, end="\a")
 	sys.stdout.flush()
 
+def pick_random_file():
+	"""Like random.choice(os.listdir(ALERT_DIR)) but respects the weights file"""
+	files = dict.fromkeys(os.listdir(ALERT_DIR), 1)
+	try:
+		with open("weights") as f:
+			for line in f:
+				if ':' not in line: continue
+				weight, pattern = line.strip().split(":", 1)
+				weight = int(weight)
+				for fn in fnmatch.filter(files, pattern):
+					files[fn] = weight
+	except IOError:
+		# File doesn't exist? Use default weights.
+		pass
+	choice = random.randrange(sum(files.values()))
+	for fn, weight in files.items():
+		choice -= weight
+		if choice < 0:
+			return fn
+	raise ValueError("Unable to randomly pick from %d files" % len(files))
+
+@command
+def pickfile(numfiles=1):
+	"""Test the random picker
+
+	numfiles: Number of files to select
+	"""
+	from collections import Counter
+	c = Counter(pick_random_file().decode("utf-8") for _ in range(numfiles))
+	for fn, count in sorted(c.items(), key=lambda item: -item[1]):
+		print(count, fn)
+
 @command
 @kwoargs("offset","days","title")
 def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
@@ -209,8 +242,7 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 		# Send an alert, if possible. Otherwise just terminate the process,
 		# and allow command chaining to perform whatever alert is needed.
 		if ALERT_DIR:
-			# TODO: Non-uniform randomness
-			fn = random.choice(os.listdir(ALERT_DIR))
+			fn = pick_random_file()
 			print()
 			print(fn)
 			if title: set_title("!! " + event)
