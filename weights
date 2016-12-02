@@ -16,5 +16,5 @@
 9: Hebrew*
 9: Arabic*
 
-# To completely remove a file from consideration:
+# To completely remove a file from consideration, do this
 0: some-unwanted-file*
