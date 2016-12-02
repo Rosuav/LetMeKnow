@@ -209,6 +209,7 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 		# Send an alert, if possible. Otherwise just terminate the process,
 		# and allow command chaining to perform whatever alert is needed.
 		if ALERT_DIR:
+			# TODO: Non-uniform randomness
 			fn = random.choice(os.listdir(ALERT_DIR))
 			print()
 			print(fn)
