@@ -12,9 +12,11 @@
 12: *English*
 
 # These files are slightly unpreferred.
-7: Ukrainian*
 9: Hebrew*
 9: Arabic*
+
+# And this one more unpreferred.
+6: Ukrainian*
 
 # To completely remove a file from consideration, do this
 0: some-unwanted-file*
