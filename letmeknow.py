@@ -261,4 +261,5 @@ if __name__ == "__main__":
 			print("*** Uncaught exception at", datetime.datetime.now(), file=exc)
 			traceback.print_exc(file=exc)
 			print(" - ".join(cls.__name__ for cls in type(exc).__mro__))
+			print(" - ".join(cls.__name__ for cls in type(exc).__mro__), file=exc)
 		raise
