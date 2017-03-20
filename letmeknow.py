@@ -180,13 +180,14 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 	title: Set the terminal title to show what's happening
 	"""
 	auth()
+	from googleapiclient.http import HttpError
 	offset, days = int(offset), int(days)
 	prev = None
 	while True:
 		now = datetime.datetime.now(pytz.utc)
 		try:
 			events = upcoming_events(calendar, offset, days)
-		except (ssl.SSLError, OSError, IOError, socket.error):
+		except (ssl.SSLError, OSError, IOError, socket.error, HttpError):
 			# SSL or OS/IO errors usually mean connection issues.
 			# Hope/assume that there haven't been any event changes,
 			# and just retain the previous event list. Yes, this looks
