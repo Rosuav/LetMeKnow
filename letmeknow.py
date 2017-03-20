@@ -254,12 +254,12 @@ if __name__ == "__main__":
 	try:
 		clize.run(commands)
 	except KeyboardInterrupt: pass # Ctrl-C is normal termination
-	except Exception:
+	except Exception as e:
 		# On exception, log and reraise as an easy way to print the traceback to two places.
 		import traceback
 		with open("exception.log", "a") as exc:
 			print("*** Uncaught exception at", datetime.datetime.now(), file=exc)
 			traceback.print_exc(file=exc)
-			print(" - ".join(cls.__name__ for cls in type(exc).__mro__))
-			print(" - ".join(cls.__name__ for cls in type(exc).__mro__), file=exc)
+			print(" - ".join(cls.__name__ for cls in type(e).__mro__))
+			print(" - ".join(cls.__name__ for cls in type(e).__mro__), file=exc)
 		raise
