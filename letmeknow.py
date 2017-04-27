@@ -44,6 +44,7 @@ def auth():
 		flow = oauth2client.client.OAuth2WebServerFlow(client_id=CLIENT_ID,client_secret=CLIENT_SECRET,
 			scope='https://www.googleapis.com/auth/calendar.readonly', # Don't need any read/write access
 			user_agent='Let Me Know')
+		import argparse
 		flags=argparse.Namespace(auth_host_name='localhost', auth_host_port=[8080, 8090], logging_level='ERROR', noauth_local_webserver=False)
 		credentials = oauth2client.tools.run_flow(flow, storage, flags)
 	# At this point, we should have viable credentials.
