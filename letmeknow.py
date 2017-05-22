@@ -108,6 +108,13 @@ def upcoming_events(calendar, offset=0, days=3):
 		events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token, singleEvents=True, orderBy="startTime").execute()
 		for event in events['items']:
 			start = event["start"]
+			if "dateTime" not in start:
+				# All-day events don't have a dateTime field. They have,
+				# instead, a date field, and probably won't ever have a
+				# timeZone. For now, ignore them; it might be necessary
+				# to act as if these are set at midnight.
+				assert "date" in start
+				continue
 			eventlist.append((parse(start["dateTime"]), event.get('summary', '(blank)'), start.get("timeZone")))
 		page_token = events.get('nextPageToken')
 		if not page_token: break
