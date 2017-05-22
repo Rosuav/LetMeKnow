@@ -107,7 +107,8 @@ def upcoming_events(calendar, offset=0, days=3):
 	while True:
 		events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token, singleEvents=True, orderBy="startTime").execute()
 		for event in events['items']:
-			eventlist.append((parse(event["start"]["dateTime"]), event.get('summary', '(blank)'), event["start"].get("timeZone")))
+			start = event["start"]
+			eventlist.append((parse(start["dateTime"]), event.get('summary', '(blank)'), start.get("timeZone")))
 		page_token = events.get('nextPageToken')
 		if not page_token: break
 	eventlist.sort()
