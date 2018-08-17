@@ -146,10 +146,7 @@ def show(calendar=DEFAULT_CALENDAR, days=3, tz=False):
 			ts = "%s %s" % (ts, raw["start"]["timeZone"])
 		print(ts, " - ", delay, " - ", desc)
 
-@command
-@kwoargs("days", "purge")
-@annotate(convert=clize.Parameter.IGNORE)
-def migrate(from_cal, to_cal=DEFAULT_CALENDAR, convert=lambda info: True, days=7, purge=False):
+def migrate(purgeme, from_cal, to_cal, convert=lambda info: True, days=7, purge=False):
 	"""Import/migrate events from one cal to another.
 
 	Pass a converter function to filter and/or mutate the events as they
@@ -157,19 +154,20 @@ def migrate(from_cal, to_cal=DEFAULT_CALENDAR, convert=lambda info: True, days=7
 	may mutate it in any way (notably, the "summary" and "description").
 	If it returns True, the event will be imported, otherwise skipped.
 	"""
-	auth()
-
 	# Step 1: List all events in the target calendar. Purge any that are
 	# obvious duplicates or have no recognized source.
-	old_events = {}
-	for ts, desc, raw in upcoming_events(to_cal, days=days, include_all_day=True):
-		src = raw.get("source", {})
-		url = src.get("url", "")
-		if purge or not url or url in old_events:
-			print("Deleting", raw["id"])
-			service.events().delete(calendarId=to_cal, eventId=raw["id"]).execute()
-			continue
-		old_events[url] = src.get("title", ""), raw["id"]
+	if to_cal not in purgeme:
+		old_events = purgeme[to_cal] = {}
+		for ts, desc, raw in upcoming_events(to_cal, days=days, include_all_day=True):
+			src = raw.get("source", {})
+			url = src.get("url", "")
+			if purge or not url or url in old_events:
+				print("Deleting", raw["summary"])
+				service.events().delete(calendarId=to_cal, eventId=raw["id"]).execute()
+				continue
+			old_events[url] = src.get("title", ""), raw["id"]
+	else:
+		old_events = purgeme[to_cal]
 
 	# Step 2: Fetch events from the source calendar. Any that we already
 	# have, accept and move on; otherwise create new events.
@@ -187,15 +185,27 @@ def migrate(from_cal, to_cal=DEFAULT_CALENDAR, convert=lambda info: True, days=7
 				continue
 		new_ev = {key: raw[key] for key in "summary description start end".split() if key in raw}
 		new_ev["source"] = {"url": src, "title": tag}
-		print("Migrating", src)
+		print("Migrating", raw["summary"])
 		ev = service.events().insert(calendarId=to_cal, body=new_ev).execute()
 
 	# Step 3: Remove all events that weren't accepted in step 2.
-	# TODO: Allow multiple imports before doing a final purge.
-	# This would mean repeating step 2 for multiple from_cal.
-	for tag, id in old_events.values():
-		print("Deleting", id)
-		service.events().delete(calendarId=to_cal, eventId=id).execute()
+	# Done externally.
+
+@command
+@kwoargs("purge")
+def auto_migrate(purge=False):
+	"""Perform all the auto-migrations specified in keys.py"""
+	if not AUTO_MIGRATE:
+		return "No auto migrations specified"
+	auth()
+	purgeme = {}
+	for spec in AUTO_MIGRATE:
+		migrate(purgeme, *spec, purge=purge)
+	for to_cal, old_events in purgeme.items():
+		if old_events: print("Cleaning up old events on", to_cal)
+		for tag, id in old_events.values():
+			print("Deleting", id)
+			service.events().delete(calendarId=to_cal, eventId=id).execute()
 
 def set_title(title):
 	print("\033]0;"+title, end="\a")
