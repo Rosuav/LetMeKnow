@@ -87,11 +87,16 @@ def parse(date):
 	return d.replace(tzinfo=tz(date[-6:]))
 
 def upcoming_events(calendar, offset=0, days=3):
-	# Returns only those at least offset seconds from the current time -
-	# offset may be negative to return events in the past. The events'
-	# times will all be exactly correct; it's only the definition of
-	# "upcoming" that is affected by the offset. Returns events within
-	# the next 'days' days.
+	"""Fetch a list of events in the next few days.
+
+	Returns only those at least offset seconds from the current time -
+	offset may be negative to return events in the past. The events'
+	times will all be exactly correct; it's only the definition of
+	"upcoming" that is affected by the offset.
+	
+	Returns events within the next 'days' days as a list of three-tuples:
+	(timestamp, description, timezone or None)
+	"""
 	page_token = None
 	now = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
 	tomorrow = now + datetime.timedelta(days=days)
