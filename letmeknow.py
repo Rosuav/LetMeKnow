@@ -95,7 +95,7 @@ def upcoming_events(calendar, offset=0, days=3):
 	"upcoming" that is affected by the offset.
 	
 	Returns events within the next 'days' days as a list of three-tuples:
-	(timestamp, description, timezone or None)
+	(timestamp, description, raw_info)
 	"""
 	page_token = None
 	now = datetime.datetime.now(pytz.utc) + datetime.timedelta(seconds=offset)
@@ -117,7 +117,7 @@ def upcoming_events(calendar, offset=0, days=3):
 				# to act as if these are set at midnight.
 				assert "date" in start
 				continue
-			eventlist.append((parse(start["dateTime"]), event.get('summary', '(blank)'), start.get("timeZone")))
+			eventlist.append((parse(start["dateTime"]), event.get('summary', '(blank)'), event))
 		page_token = events.get('nextPageToken')
 		if not page_token: break
 	eventlist.sort()
@@ -136,10 +136,11 @@ def show(calendar=DEFAULT_CALENDAR, days=3, tz=False):
 	"""
 	auth()
 	now = datetime.datetime.now(pytz.utc)
-	for ev in upcoming_events(calendar,days=days):
-		if tz and ev[2]: ts = str(ev[0]) + " " + ev[2]
-		else: ts = ev[0]
-		print(ts," - ",ev[0]-now," - ",ev[1])
+	for ts, desc, raw in upcoming_events(calendar,days=days):
+		delay = ts - now
+		if tz and "timeZone" in raw["start"]:
+			ts = "%s %s" % (ts, raw["start"]["timeZone"])
+		print(ts, " - ", delay, " - ", desc)
 
 def set_title(title):
 	print("\033]0;"+title, end="\a")
