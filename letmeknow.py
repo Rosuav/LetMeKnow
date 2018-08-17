@@ -171,7 +171,7 @@ def pickfile(numfiles=1):
 	numfiles: Number of files to select
 	"""
 	from collections import Counter
-	c = Counter(pick_random_file().decode("utf-8") for _ in range(numfiles))
+	c = Counter(pick_random_file() for _ in range(numfiles))
 	for fn, count in sorted(c.items(), key=lambda item: -item[1]):
 		print(count, fn)
 
@@ -256,7 +256,7 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 			print()
 			print(fn)
 			if title: set_title("!! " + event)
-			subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"w"),stderr=subprocess.STDOUT).wait()
+			subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"wb"),stderr=subprocess.STDOUT).wait()
 		if not ALERT_REPEAT: break # Stop waiting, or go back into the loop and see how we go.
 		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
 
