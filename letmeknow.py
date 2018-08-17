@@ -14,7 +14,7 @@ import subprocess
 from pprint import pprint
 from time import sleep
 import clize
-from sigtools.modifiers import kwoargs
+from sigtools.modifiers import kwoargs, annotate
 
 commands = []
 def command(f):
@@ -148,10 +148,14 @@ def show(calendar=DEFAULT_CALENDAR, days=3, tz=False):
 
 @command
 @kwoargs("days", "purge")
-def migrate(from_cal, to_cal=DEFAULT_CALENDAR, days=7, purge=False):
+@annotate(convert=clize.Parameter.IGNORE)
+def migrate(from_cal, to_cal=DEFAULT_CALENDAR, convert=lambda info: True, days=7, purge=False):
 	"""Import/migrate events from one cal to another.
 
-	TODO: Allow a custom filter/map function to be provided.
+	Pass a converter function to filter and/or mutate the events as they
+	are imported. It will be given a raw dictionary of event info, and
+	may mutate it in any way (notably, the "summary" and "description").
+	If it returns True, the event will be imported, otherwise skipped.
 	"""
 	auth()
 
@@ -171,7 +175,7 @@ def migrate(from_cal, to_cal=DEFAULT_CALENDAR, days=7, purge=False):
 	# have, accept and move on; otherwise create new events.
 	for ts, desc, raw in upcoming_events(from_cal, days=days, include_all_day=True):
 		src, tag = raw["htmlLink"], raw["etag"]
-		# TODO: Permit the dictionary to be mutated
+		if not convert(raw): continue # Note that 'raw' could be mutated here
 		if src in old_events:
 			# Check if the event is absolutely identical. If so, skip;
 			# otherwise, delete the old one and replace it. Note that
@@ -187,6 +191,8 @@ def migrate(from_cal, to_cal=DEFAULT_CALENDAR, days=7, purge=False):
 		ev = service.events().insert(calendarId=to_cal, body=new_ev).execute()
 
 	# Step 3: Remove all events that weren't accepted in step 2.
+	# TODO: Allow multiple imports before doing a final purge.
+	# This would mean repeating step 2 for multiple from_cal.
 	for tag, id in old_events.values():
 		print("Deleting", id)
 		service.events().delete(calendarId=to_cal, eventId=id).execute()
