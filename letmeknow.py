@@ -150,7 +150,7 @@ def pick_random_file():
 		with open("weights") as f:
 			for line in f:
 				if ':' not in line: continue
-				weight, pattern = line.strip().split(":", 1)
+				weight, pattern = line.strip().split(": ", 1)
 				weight = int(weight)
 				for fn in fnmatch.filter(files, pattern):
 					files[fn] = weight

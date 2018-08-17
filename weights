@@ -21,7 +21,7 @@
 9: Slovak*
 
 # And this one more unpreferred.
-6: Ukrainian*
+7: Ukrainian*
 
 # To completely remove a file from consideration, do this
 0: some-unwanted-file*
