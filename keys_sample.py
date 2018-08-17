@@ -6,3 +6,4 @@ CLIENT_SECRET = ""
 DEFAULT_CALENDAR = "" # If nonblank, will be the default for all 'calendar' args
 ALERT_DIR = "" # If nonblank, a file from this directory will be picked at random and passed to VLC
 ALERT_REPEAT = False # If True, alerting will be done in 'repeat' mode. Not useful if ALERT_DIR unset.
+READ_ONLY = True # Set to False if you want to use the 'migrate' subcommand; True requests smaller OAuth scope

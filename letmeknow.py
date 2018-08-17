@@ -39,7 +39,7 @@ def auth():
 		# actually pass it any of the args from the command line. TODO: Use
 		# our own code here instead.
 		flow = oauth2client.client.OAuth2WebServerFlow(client_id=CLIENT_ID,client_secret=CLIENT_SECRET,
-			scope='https://www.googleapis.com/auth/calendar.readonly', # Don't need any read/write access
+			scope='https://www.googleapis.com/auth/calendar' + '.readonly' * READ_ONLY, # Don't normally need any read/write access
 			user_agent='Let Me Know')
 		import argparse
 		flags=argparse.Namespace(auth_host_name='localhost', auth_host_port=[8080, 8090], logging_level='ERROR', noauth_local_webserver=False)
@@ -124,7 +124,7 @@ def upcoming_events(calendar, offset=0, days=3, include_all_day=False):
 			eventlist.append((ts, event.get('summary', '(blank)'), event))
 		page_token = events.get('nextPageToken')
 		if not page_token: break
-	eventlist.sort()
+	eventlist.sort(key=lambda ev: ev[:2])
 	return eventlist
 
 @command
@@ -145,6 +145,49 @@ def show(calendar=DEFAULT_CALENDAR, days=3, tz=False):
 		if tz and "timeZone" in raw["start"]:
 			ts = "%s %s" % (ts, raw["start"]["timeZone"])
 		print(ts, " - ", delay, " - ", desc)
+
+@command
+@kwoargs("days", "purge")
+def migrate(from_cal, to_cal=DEFAULT_CALENDAR, days=7, purge=False):
+	"""Import/migrate events from one cal to another.
+
+	TODO: Allow a custom filter/map function to be provided.
+	"""
+	auth()
+
+	# Step 1: List all events in the target calendar. Purge any that are
+	# obvious duplicates or have no recognized source.
+	old_events = {}
+	for ts, desc, raw in upcoming_events(to_cal, days=days, include_all_day=True):
+		src = raw.get("source", {})
+		url = src.get("url", "")
+		if purge or not url or url in old_events:
+			print("Deleting", raw["id"])
+			service.events().delete(calendarId=to_cal, eventId=raw["id"]).execute()
+			continue
+		old_events[url] = src.get("title", ""), raw["id"]
+
+	# Step 2: Fetch events from the source calendar. Any that we already
+	# have, accept and move on; otherwise create new events.
+	for ts, desc, raw in upcoming_events(from_cal, days=days, include_all_day=True):
+		if raw["htmlLink"] in old_events:
+			# Check if the event is absolutely identical. If so, skip;
+			# otherwise, delete the old one and replace it. Note that
+			# if the filtration/mapping function is changed, the etag
+			# check won't be valid. If that happens, use --purge to
+			# force all events to be removed and recreated.
+			if old_events[raw["htmlLink"]][0] == raw["etag"]:
+				del old_events[raw["htmlLink"]]
+				continue
+		new_ev = {key: raw[key] for key in "summary description start end".split() if key in raw}
+		new_ev["source"] = {"url": raw["htmlLink"], "title": raw["etag"]}
+		print("Migrating", raw["htmlLink"])
+		ev = service.events().insert(calendarId=to_cal, body=new_ev).execute()
+
+	# Step 3: Remove all events that weren't accepted in step 2.
+	for tag, id in old_events.values():
+		print("Deleting", id)
+		service.events().delete(calendarId=to_cal, eventId=id).execute()
 
 def set_title(title):
 	print("\033]0;"+title, end="\a")
