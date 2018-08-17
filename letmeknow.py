@@ -183,7 +183,7 @@ def migrate(purgeme, from_cal, to_cal, convert=lambda info: True, days=7, purge=
 			if old_events[src][0] == raw["etag"]:
 				del old_events[src]
 				continue
-		new_ev = {key: raw[key] for key in "summary description start end".split() if key in raw}
+		new_ev = {key: raw[key] for key in "summary description start end colorId".split() if key in raw}
 		new_ev["source"] = {"url": src, "title": tag}
 		print("Migrating", raw["summary"])
 		ev = service.events().insert(calendarId=to_cal, body=new_ev).execute()
