@@ -280,9 +280,9 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 		if not events:
 			print("Nothing to wait for in the entire next",days,"days - aborting.")
 			return
-		time, event, _ = events[0]
-		target = time-datetime.timedelta(seconds=offset)
-		delay = target-datetime.datetime.now(pytz.utc)
+		tm, event, _ = events[0]
+		target = tm - datetime.timedelta(seconds=offset)
+		delay = target - datetime.datetime.now(pytz.utc)
 		if prev and prev!=event: print() # Drop to a new line if the target event changes
 		print("Sleeping",delay,"until",target,"-",event,end="\33[K\r")
 		sys.stdout.flush()
