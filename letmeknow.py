@@ -12,7 +12,7 @@ import socket
 import fnmatch
 import subprocess
 from pprint import pprint
-from time import sleep
+from time import time, sleep
 import clize
 from sigtools.modifiers import kwoargs, annotate
 
@@ -245,8 +245,8 @@ def pickfile(numfiles=1):
 		print(count, fn)
 
 @command
-@kwoargs("offset","days","title")
-def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
+@kwoargs("offset", "days", "title", "auto_import")
+def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0):
 	"""Await the next event on this calendar
 	
 	calendar: Calendar ID, as shown by list()
@@ -256,11 +256,14 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 	days: Number of days in the future to look - gives up if no events in that time
 
 	title: Set the terminal title to show what's happening
+
+	auto_import: Approximate period (in seconds) to rerun an autoimport
 	"""
 	auth()
 	from googleapiclient.http import HttpError
 	offset, days = int(offset), int(days)
 	prev = None
+	next_auto_import = 0
 	while True:
 		now = datetime.datetime.now(pytz.utc)
 		try:
@@ -280,6 +283,11 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False):
 		if not events:
 			print("Nothing to wait for in the entire next",days,"days - aborting.")
 			return
+
+		if auto_import and time() > next_auto_import:
+			auto_migrate()
+			next_auto_import = time() + auto_import
+
 		tm, event, _ = events[0]
 		target = tm - datetime.timedelta(seconds=offset)
 		delay = target - datetime.datetime.now(pytz.utc)
