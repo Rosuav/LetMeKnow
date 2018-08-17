@@ -5,5 +5,4 @@ Primary usage is with the 'await' subcommand, for example:
 
 python letmeknow.py await --offset 300 --title
 
-The code is currently bound to Python 2 due to limitations of the Google API
-module, but should be easy enough to port to Py3 when that is lifted.
+Requires Python 2.7 or 3.5+.
