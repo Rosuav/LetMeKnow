@@ -170,18 +170,20 @@ def migrate(from_cal, to_cal=DEFAULT_CALENDAR, days=7, purge=False):
 	# Step 2: Fetch events from the source calendar. Any that we already
 	# have, accept and move on; otherwise create new events.
 	for ts, desc, raw in upcoming_events(from_cal, days=days, include_all_day=True):
-		if raw["htmlLink"] in old_events:
+		src, tag = raw["htmlLink"], raw["etag"]
+		# TODO: Permit the dictionary to be mutated
+		if src in old_events:
 			# Check if the event is absolutely identical. If so, skip;
 			# otherwise, delete the old one and replace it. Note that
 			# if the filtration/mapping function is changed, the etag
 			# check won't be valid. If that happens, use --purge to
 			# force all events to be removed and recreated.
-			if old_events[raw["htmlLink"]][0] == raw["etag"]:
-				del old_events[raw["htmlLink"]]
+			if old_events[src][0] == raw["etag"]:
+				del old_events[src]
 				continue
 		new_ev = {key: raw[key] for key in "summary description start end".split() if key in raw}
-		new_ev["source"] = {"url": raw["htmlLink"], "title": raw["etag"]}
-		print("Migrating", raw["htmlLink"])
+		new_ev["source"] = {"url": src, "title": tag}
+		print("Migrating", src)
 		ev = service.events().insert(calendarId=to_cal, body=new_ev).execute()
 
 	# Step 3: Remove all events that weren't accepted in step 2.
