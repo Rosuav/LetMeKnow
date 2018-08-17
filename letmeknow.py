@@ -1,10 +1,7 @@
 """Let Me Know - Google Calendar notifications using Frozen"""
 from __future__ import print_function
-# Note that this is written for Python 2.7 because the Google APIs don't
-# seem to work with 3.x (strangely enough, there's nothing telling pip not
-# to install it, though). For the most part, I expect that this code should
-# be able to run under Py3 unchanged, once the upstream dep is fixed, but
-# it hasn't been tested at all.
+# Note that this is aimed at being compatible with Python 2.7 and 3.5+.
+# However, I have not tested in all versions thoroughly.
 import datetime
 import pytz
 import sys
@@ -145,6 +142,7 @@ def set_title(title):
 
 def pick_random_file():
 	"""Like random.choice(os.listdir(ALERT_DIR)) but respects the weights file"""
+	# Returns a native string - bytes on Py2, text on Py3.
 	files = dict.fromkeys(os.listdir(ALERT_DIR), 1)
 	try:
 		with open("weights") as f:
