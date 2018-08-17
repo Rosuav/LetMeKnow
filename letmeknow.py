@@ -86,14 +86,17 @@ def parse(date):
 	# Now let's try... TRY to patch in a timezone.
 	return d.replace(tzinfo=tz(date[-6:]))
 
-def upcoming_events(calendar, offset=0, days=3):
+def upcoming_events(calendar, offset=0, days=3, include_all_day=False):
 	"""Fetch a list of events in the next few days.
 
 	Returns only those at least offset seconds from the current time -
 	offset may be negative to return events in the past. The events'
 	times will all be exactly correct; it's only the definition of
 	"upcoming" that is affected by the offset.
-	
+
+	All-day events are generally suppressed as uninteresting. If included,
+	they are timestamped at midnight UTC.
+
 	Returns events within the next 'days' days as a list of three-tuples:
 	(timestamp, description, raw_info)
 	"""
@@ -113,11 +116,12 @@ def upcoming_events(calendar, offset=0, days=3):
 			if "dateTime" not in start:
 				# All-day events don't have a dateTime field. They have,
 				# instead, a date field, and probably won't ever have a
-				# timeZone. For now, ignore them; it might be necessary
-				# to act as if these are set at midnight.
-				assert "date" in start
-				continue
-			eventlist.append((parse(start["dateTime"]), event.get('summary', '(blank)'), event))
+				# timeZone.
+				if not include_all_day: continue
+				ts = datetime.datetime(*map(int, start["date"].split("-")), tzinfo=pytz.utc)
+			else:
+				ts = parse(start["dateTime"])
+			eventlist.append((ts, event.get('summary', '(blank)'), event))
 		page_token = events.get('nextPageToken')
 		if not page_token: break
 	eventlist.sort()
@@ -136,7 +140,7 @@ def show(calendar=DEFAULT_CALENDAR, days=3, tz=False):
 	"""
 	auth()
 	now = datetime.datetime.now(pytz.utc)
-	for ts, desc, raw in upcoming_events(calendar,days=days):
+	for ts, desc, raw in upcoming_events(calendar, days=days, include_all_day=True):
 		delay = ts - now
 		if tz and "timeZone" in raw["start"]:
 			ts = "%s %s" % (ts, raw["start"]["timeZone"])
