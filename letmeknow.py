@@ -110,13 +110,12 @@ def upcoming_events(calendar, offset=0, days=3, include_all_day=False):
 	now,tomorrow = (x.strftime("%Y-%m-%dT%H:%M:%SZ") for x in (now,tomorrow))
 	eventlist=[]
 	for calendar in calendar.split(","):
-		# Note that I do my own sorting at the end, despite specifying orderBy. This
-		# is because, quite frankly, I don't trust Google Calendar's handling of
-		# multiple timezones. Normally I expect the final sort to be a simple matter
-		# of checking that they're in order, which should be a fast operation.
-		# If multiple calendars were selected, the final sort would be a merge of the
-		# different sequences, which in CPython is a fast operation (TimSort shines
-		# at that).
+		# Note that I do my own sorting at the end, despite specifying orderBy. In
+		# the common case where a single calendar is being used, this ought to be
+		# redundant, but quite frankly, I don't trust Google Calendar's handling of
+		# multiple timezones, and it's safer and simpler to just do the sort. The
+		# algorithm used by CPython (TimSort) handles merges and sort checks very
+		# efficiently, so it's not a high cost (esp compared to the network queries).
 		while True:
 			events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token, singleEvents=True, orderBy="startTime").execute()
 			for event in events['items']:
