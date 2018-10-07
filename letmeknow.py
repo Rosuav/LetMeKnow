@@ -89,6 +89,10 @@ def parse(date):
 def upcoming_events(calendar, offset=0, days=3, include_all_day=False):
 	"""Fetch a list of events in the next few days.
 
+	'calendar' is either a GCal calendar ID, or multiple of them joined
+	with commas. (The separator may change in the future if a conflict
+	is discovered. Single calendar ID is dependable.)
+
 	Returns only those at least offset seconds from the current time -
 	offset may be negative to return events in the past. The events'
 	times will all be exactly correct; it's only the definition of
@@ -105,32 +109,36 @@ def upcoming_events(calendar, offset=0, days=3, include_all_day=False):
 	tomorrow = now + datetime.timedelta(days=days)
 	now,tomorrow = (x.strftime("%Y-%m-%dT%H:%M:%SZ") for x in (now,tomorrow))
 	eventlist=[]
-	# Note that I do my own sorting at the end, despite specifying orderBy. This
-	# is because, quite frankly, I don't trust Google Calendar's handling of
-	# multiple timezones. Normally I expect the final sort to be a simple matter
-	# of checking that they're in order, which should be a fast operation.
-	while True:
-		events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token, singleEvents=True, orderBy="startTime").execute()
-		for event in events['items']:
-			start = event["start"]
-			if "dateTime" not in start:
-				# All-day events don't have a dateTime field. They have,
-				# instead, a date field, and probably won't ever have a
-				# timeZone.
-				if not include_all_day: continue
-				ts = datetime.datetime(*map(int, start["date"].split("-")), tzinfo=pytz.utc)
-			else:
-				ts = parse(start["dateTime"])
-			eventlist.append((ts, event.get('summary', '(blank)'), event))
-		page_token = events.get('nextPageToken')
-		if not page_token: break
+	for calendar in calendar.split(","):
+		# Note that I do my own sorting at the end, despite specifying orderBy. This
+		# is because, quite frankly, I don't trust Google Calendar's handling of
+		# multiple timezones. Normally I expect the final sort to be a simple matter
+		# of checking that they're in order, which should be a fast operation.
+		# If multiple calendars were selected, the final sort would be a merge of the
+		# different sequences, which in CPython is a fast operation (TimSort shines
+		# at that).
+		while True:
+			events = service.events().list(calendarId=calendar, timeMin=now, timeMax=tomorrow, pageToken=page_token, singleEvents=True, orderBy="startTime").execute()
+			for event in events['items']:
+				start = event["start"]
+				if "dateTime" not in start:
+					# All-day events don't have a dateTime field. They have,
+					# instead, a date field, and probably won't ever have a
+					# timeZone.
+					if not include_all_day: continue
+					ts = datetime.datetime(*map(int, start["date"].split("-")), tzinfo=pytz.utc)
+				else:
+					ts = parse(start["dateTime"])
+				eventlist.append((ts, event.get('summary', '(blank)'), event))
+			page_token = events.get('nextPageToken')
+			if not page_token: break
 	eventlist.sort(key=lambda ev: ev[:2])
 	return eventlist
 
 @command
 @kwoargs("days","tz")
 def show(calendar=DEFAULT_CALENDAR, days=3, tz=False):
-	"""Show upcoming events from one calendar
+	"""Show upcoming events from one or more calendars
 
 	calendar: Calendar ID, as shown by list()
 
