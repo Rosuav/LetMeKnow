@@ -214,6 +214,19 @@ def auto_migrate(purge=False):
 			print("Deleting", id)
 			service.events().delete(calendarId=to_cal, eventId=id).execute()
 
+@command
+def color_demo():
+	auth()
+	for color in range(12):
+		new_ev = {
+			"colorId": color + 12,
+			"summary": "Color %d" % color,
+			"start": {"dateTime": "2018-10-28T%02d:00:00-08:00" % (color,), "timeZone": "Australia/Melbourne"},
+			"end": {"dateTime": "2018-10-28T%02d:00:00-08:00" % (color+1,), "timeZone": "Australia/Melbourne"},
+		}
+		ev = service.events().insert(calendarId="4p6lkis01le8tgsjvkm0p33mkc@group.calendar.google.com", body=new_ev).execute()
+		print(ev)
+
 def set_title(title):
 	print("\033]0;"+title, end="\a")
 	sys.stdout.flush()
