@@ -165,7 +165,10 @@ def migrate(purgeme, from_cal, to_cal, convert=lambda info: True, days=7, purge=
 	# obvious duplicates or have no recognized source.
 	if to_cal not in purgeme:
 		old_events = purgeme[to_cal] = {}
-		for ts, desc, raw in upcoming_events(to_cal, days=days, include_all_day=True):
+		# Check events up to a day earlier than we're mainly working. Otherwise,
+		# timezones and all-day events can wreak havoc with us. TODO: See if the
+		# upshot is that week-old events get deleted, which wouldn't be ideal.
+		for ts, desc, raw in upcoming_events(to_cal, days=days+1, offset=-86400, include_all_day=True):
 			src = raw.get("source", {})
 			url = src.get("url", "")
 			if purge or not url or url in old_events:
