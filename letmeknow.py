@@ -308,8 +308,13 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0
 			return
 
 		if auto_import and time() > next_auto_import:
-			auto_migrate()
-			next_auto_import = time() + auto_import
+			try:
+				auto_migrate()
+			except googleapiclient.errors.HttpError as e:
+				print("Unable to automigrate:", e)
+				# and then we'll retry at next iteration
+			else:
+				next_auto_import = time() + auto_import
 
 		tm, event, _ = events[0]
 		target = tm - datetime.timedelta(seconds=offset)
