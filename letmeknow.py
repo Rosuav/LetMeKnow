@@ -15,6 +15,8 @@ from pprint import pprint
 from time import time, sleep
 import clize
 from sigtools.modifiers import kwoargs, annotate
+# uritemplate doesn't work on 3.9, and drops a warning on 3.8.
+import collections.abc; collections.MutableMapping = collections.abc.MutableMapping
 
 commands = []
 def command(f):
