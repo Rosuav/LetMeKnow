@@ -312,7 +312,7 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0
 		if auto_import and time() > next_auto_import:
 			try:
 				auto_migrate()
-			except googleapiclient.errors.HttpError as e:
+			except HttpError as e:
 				print("Unable to automigrate:", e)
 				# and then we'll retry at next iteration
 			else:
