@@ -211,8 +211,13 @@ def auto_migrate(purge=False):
 		return "No auto migrations specified"
 	auth()
 	purgeme = {}
+	from googleapiclient.http import HttpError
 	for spec in AUTO_MIGRATE:
-		migrate(purgeme, *spec, purge=purge)
+		try:
+			migrate(purgeme, *spec, purge=purge)
+		except HttpError as e:
+			print("Unable to automigrate:", e)
+			# It can be retried later.
 	for to_cal, old_events in purgeme.items():
 		if old_events: print("Cleaning up old events on", to_cal)
 		for tag, id in old_events.values():
@@ -310,13 +315,8 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0
 			return
 
 		if auto_import and time() > next_auto_import:
-			try:
-				auto_migrate()
-			except HttpError as e:
-				print("Unable to automigrate:", e)
-				# and then we'll retry at next iteration
-			else:
-				next_auto_import = time() + auto_import
+			auto_migrate()
+			next_auto_import = time() + auto_import
 
 		tm, event, _ = events[0]
 		target = tm - datetime.timedelta(seconds=offset)
