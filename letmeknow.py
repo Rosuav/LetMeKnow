@@ -379,4 +379,6 @@ if __name__ == "__main__":
 			traceback.print_exc(file=exc)
 			print(" - ".join(cls.__name__ for cls in type(e).__mro__))
 			print(" - ".join(cls.__name__ for cls in type(e).__mro__), file=exc)
+		# Attempt to fire an alarm sound. If it fails, so be it; we already have the log.
+		subprocess.Popen(["vlc", "Music/Alice/Alice2/01-Alice- Madness Returns Theme.mp3"], stdout=open(os.devnull,"wb"), stderr=subprocess.STDOUT).wait()
 		raise
