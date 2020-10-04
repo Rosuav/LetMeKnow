@@ -298,6 +298,10 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0
 		now = datetime.datetime.now(pytz.utc)
 		try:
 			events = upcoming_events(calendar, offset, days)
+
+			if auto_import and time() > next_auto_import:
+				auto_migrate()
+				next_auto_import = time() + auto_import
 		except (ssl.SSLError, OSError, IOError, socket.error, HttpError):
 			# SSL or OS/IO errors usually mean connection issues.
 			# Hope/assume that there haven't been any event changes,
@@ -313,10 +317,6 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0
 		if not events:
 			print("Nothing to wait for in the entire next",days,"days - aborting.")
 			return
-
-		if auto_import and time() > next_auto_import:
-			auto_migrate()
-			next_auto_import = time() + auto_import
 
 		tm, event, _ = events[0]
 		target = tm - datetime.timedelta(seconds=offset)
@@ -380,5 +380,5 @@ if __name__ == "__main__":
 			print(" - ".join(cls.__name__ for cls in type(e).__mro__))
 			print(" - ".join(cls.__name__ for cls in type(e).__mro__), file=exc)
 		# Attempt to fire an alarm sound. If it fails, so be it; we already have the log.
-		subprocess.Popen(["vlc", "Music/Alice/Alice2/01-Alice- Madness Returns Theme.mp3"], stdout=open(os.devnull,"wb"), stderr=subprocess.STDOUT).wait()
+		subprocess.Popen(["vlc", "alarm.mp3"], stdout=open(os.devnull,"wb"), stderr=subprocess.STDOUT).wait()
 		raise
