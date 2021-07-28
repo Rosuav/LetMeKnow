@@ -21,7 +21,8 @@
 9: Slovak*
 
 # And this one more unpreferred.
-7: Ukrainian*
+# CJA 20210728: Every time this one comes on, I just feel let down. So, no more.
+0: Ukrainian*
 
 # To completely remove a file from consideration, do this
 0: some-unwanted-file*
