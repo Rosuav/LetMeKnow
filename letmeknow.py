@@ -321,8 +321,8 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0
 		tm, event, _ = events[0]
 		target = tm - datetime.timedelta(seconds=offset)
 		delay = target - datetime.datetime.now(pytz.utc)
-		if prev and prev!=event: print() # Drop to a new line if the target event changes
-		print("Sleeping",delay,"until",target,"-",event,end="\33[K\r")
+		if prev and prev != event: print() # Drop to a new line if the target event changes
+		print("Sleeping", delay, "until", target, "-" , event, end="\33[K\r")
 		sys.stdout.flush()
 		prev=event
 		if delay.total_seconds() > 900:
