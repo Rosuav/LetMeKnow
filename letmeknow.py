@@ -275,6 +275,13 @@ def pickfile(numfiles=1):
 		print(count, fn)
 
 @command
+def play_alert():
+	"""Play an alert immediately"""
+	fn = pick_random_file()
+	print(fn)
+	subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"wb"),stderr=subprocess.STDOUT).wait()
+
+@command
 @kwoargs("offset", "days", "title", "auto_import")
 def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0):
 	"""Await the next event on this calendar
@@ -359,11 +366,9 @@ def wait(calendar=DEFAULT_CALENDAR, offset=0, days=7, title=False, auto_import=0
 		# Send an alert, if possible. Otherwise just terminate the process,
 		# and allow command chaining to perform whatever alert is needed.
 		if ALERT_DIR:
-			fn = pick_random_file()
 			print()
-			print(fn)
 			if title: set_title("!! " + event)
-			subprocess.Popen(["vlc",os.path.join(ALERT_DIR,fn)],stdout=open(os.devnull,"wb"),stderr=subprocess.STDOUT).wait()
+			play_alert()
 		if not ALERT_REPEAT: break # Stop waiting, or go back into the loop and see how we go.
 		sleep(1) # Just make absolutely sure that we don't get into an infinite loop, here. We don't want to find ourselves spinning.
 
