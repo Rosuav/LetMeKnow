@@ -1,3 +1,4 @@
+#!/usr/local/bin/python3.11
 import os
 import getpass
 import subprocess
