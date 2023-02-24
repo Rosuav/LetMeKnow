@@ -1,27 +1,33 @@
-#!/usr/local/bin/python3.11
 import os
-import getpass
+import socket
+import struct
 import subprocess
-import pymumble_py3
+import time
 import letmeknow
-m = pymumble_py3.Mumble("localhost", "notifier", password=getpass.getpass()) 
-m.start() # Start before setting up the callbacks. We don't need a notification for people already present.
-m.is_ready()
 
-def callback(cb):
-	def deco(func):
-		m.callbacks.add_callback(cb, func)
-		return func
-	return deco
+HOST = "localhost"
+PORT = 64738
 
 def fire_alert():
 	# Basically the same as letmeknow.play_alert() but asynchronous
 	fn = letmeknow.pick_random_file()
 	subprocess.Popen(["vlc", os.path.join(letmeknow.ALERT_DIR,fn)], stdout=open(os.devnull,"wb"), stderr=subprocess.STDOUT)
 
-@callback(pymumble_py3.callbacks.PYMUMBLE_CLBK_USERCREATED)
-def user_arrived(user):
-	print("USER ARRIVED:", user["name"])
-	fire_alert()
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.settimeout(1)
 
-m.join()
+last_users = None
+
+while True:
+	# The sent message is four bytes of zeros followed by an eight byte
+	# identifier. We're using all zero for simplicity.
+	sock.sendto(bytes(12), (HOST, PORT))
+	data, addr = sock.recvfrom(1024) # Will raise on timeout
+	# See protocol details at https://wiki.mumble.info/wiki/Protocol
+	ver, ident, users, maxusers, maxbw = struct.unpack(">iQiii", data)
+	# print(hex(ver), ident, users, maxusers, maxbw)
+	if users != last_users and last_users is not None:
+		print("Formerly %d users, now %d" % (last_users, users))
+		if users > last_users: fire_alert()
+	last_users = users
+	time.sleep(3) # Fairly frequent polls, but hey, it's a simple UDP query
