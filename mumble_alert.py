@@ -7,6 +7,7 @@ import letmeknow
 
 HOST = "localhost"
 PORT = 64738
+POLLDELAY = 3 # Fairly frequent polls, but hey, it's a simple UDP query
 
 def fire_alert():
 	# Basically the same as letmeknow.play_alert() but asynchronous
@@ -17,6 +18,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.settimeout(1)
 
 last_users = None
+alert_users = None
 
 while True:
 	# The sent message is four bytes of zeros followed by an eight byte
@@ -26,8 +28,17 @@ while True:
 	# See protocol details at https://wiki.mumble.info/wiki/Protocol
 	ver, ident, users, maxusers, maxbw = struct.unpack(">iQiii", data)
 	# print(hex(ver), ident, users, maxusers, maxbw)
-	if users != last_users and last_users is not None:
-		print("Formerly %d users, now %d" % (last_users, users))
-		if users > last_users: fire_alert()
+	if users != last_users:
+		if last_users is not None:
+			print("Formerly %d users [for %ds], now %d" % (last_users, last_users_count * POLLDELAY, users))
+			if alert_users is None and users > last_users: alert_users = users
+		else:
+			print(f"Online: {users} / {maxusers}")
+		last_users_count = 0
 	last_users = users
-	time.sleep(3) # Fairly frequent polls, but hey, it's a simple UDP query
+	last_users_count += 1
+	if last_users_count > 2 and alert_users is not None:
+		# Only fire an alert if we remain above the previous for a couple of checks
+		if alert_users == users: fire_alert()
+		alert_users = None
+	time.sleep(POLLDELAY)
