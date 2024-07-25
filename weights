@@ -20,9 +20,16 @@
 9: Arabic*
 9: Slovak*
 
+8: Japanese*
+8: Thai*
+7: Russian*
+6: *Mandarin*
+6: Cantonese*
+
 # And this one more unpreferred.
 # CJA 20210728 - Every time this one comes on, I just feel let down. So, no more.
-0: Ukrainian*
+# CJA 20240725: Let's try reinstating it, see if I like it now.
+10: Ukrainian*
 
 # To completely remove a file from consideration, do this
 0: some-unwanted-file*
