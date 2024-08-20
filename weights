@@ -29,7 +29,8 @@
 # And this one more unpreferred.
 # CJA 20210728 - Every time this one comes on, I just feel let down. So, no more.
 # CJA 20240725: Let's try reinstating it, see if I like it now.
-10: Ukrainian*
+# CJA 20240820: She keeps missing her notes and I don't like it. Sorry.
+0: Ukrainian*
 
 # To completely remove a file from consideration, do this
 0: some-unwanted-file*
