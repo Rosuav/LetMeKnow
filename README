@@ -1,8 +1,8 @@
 LetMeKnow - Google Calendar notifications using Frozen.
 
 Logs in to your Google Calendar via the API and shows you what's coming up.
-Primary usage is with the 'await' subcommand, for example:
+Primary usage is with the 'wait' subcommand, for example:
 
-python letmeknow.py await --offset 300 --title
+python letmeknow.py wait --offset 300 --title
 
 Requires Python 2.7 or 3.5+.
