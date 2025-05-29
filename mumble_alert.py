@@ -37,7 +37,7 @@ while True:
 		last_users_count = 0
 	last_users = users
 	last_users_count += 1
-	if last_users_count > 2 and alert_users is not None:
+	if last_users_count > 5 and alert_users is not None:
 		# Only fire an alert if we remain above the previous for a couple of checks
 		if alert_users == users: fire_alert()
 		alert_users = None
