@@ -32,5 +32,9 @@
 # CJA 20240820: She keeps missing her notes and I don't like it. Sorry.
 0: Ukrainian*
 
+# CJA 20251015: Even though I love the English version, for technical reasons, it's
+# causing problems. So I'm removing it.
+0: _Original*
+
 # To completely remove a file from consideration, do this
 0: some-unwanted-file*
